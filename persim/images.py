@@ -101,7 +101,8 @@ class PersImage(TransformerMixin):
                 "minBD": np.min([np.min(np.vstack((landscape, np.zeros((1, 2))))) 
                                  for landscape in landscapes] + [0]),
             }
-        imgs = [self._transform(dgm) for dgm in landscapes]
+        maxy = np.max( [np.max(landscape[:, 1]) for landscape in landscapes])
+        imgs = [self._transform(dgm,maxy) for dgm in landscapes]
 
         # Make sure we return one item.
         if singular:
@@ -109,7 +110,7 @@ class PersImage(TransformerMixin):
 
         return imgs
 
-    def _transform(self, landscape):
+    def _transform(self, landscape,maxy):
         # Define an NxN grid over our landscape
         maxBD = self.specs["maxBD"]
         minBD = min(self.specs["minBD"], 0)  # at least show 0, maybe lower
@@ -122,7 +123,7 @@ class PersImage(TransformerMixin):
         ys_lower = np.linspace(0, maxBD, self.ny)
         ys_upper = np.linspace(0, maxBD, self.ny) + dx
 
-        weighting = self.weighting(landscape)
+        weighting = self.weighting(landscape,maxy)
 
         # Define zeros
         img = np.zeros((self.nx, self.ny))
@@ -140,19 +141,12 @@ class PersImage(TransformerMixin):
         img = img.T[::-1]
         return img
 
-    def weighting(self, landscape=None):
+    def weighting(self, landscape=None,maxy=1):
         """ Define a weighting function, 
                 for stability results to hold, the function must be 0 at y=0.    
         """
 
         # TODO: Implement a logistic function
-        # TODO: use self.weighting_type to choose function
-
-        if landscape is not None:
-            if len(landscape) > 0:
-                maxy = np.max(landscape[:, 1])
-            else: 
-                maxy = 1
 
         def linear(interval):
             # linear function of y such that f(0) = 0 and f(max(y)) = 1
@@ -174,6 +168,15 @@ class PersImage(TransformerMixin):
                 return t / b
             if b <= t:
                 return 1
+        def uniform(interval):
+            return 1
+
+        if self.weighting_type=="linear":
+            return linear
+        elif self.weighting_type=="pw_linear":
+            return pw_linear
+        elif self.weighting_type=="uniform":
+            return uniform
 
         return linear
 
