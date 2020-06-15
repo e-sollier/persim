@@ -101,7 +101,13 @@ class PersImage(TransformerMixin):
                 "minBD": np.min([np.min(np.vstack((landscape, np.zeros((1, 2))))) 
                                  for landscape in landscapes] + [0]),
             }
-        maxy = np.max( [np.max(landscape[:, 1]) for landscape in landscapes])
+        maxy=0.0
+        for landscape in landscapes:
+            if landscape!=[]:
+                if np.max(landscape[:,1])>maxy:
+                    maxy = np.max(landscape[:,1])
+                #maxy = np.max(maxy,np.max(landscape[:,1]))
+        #maxy = np.max( [np.max(landscape[:, 1]) for landscape in landscapes])
         imgs = [self._transform(dgm,maxy) for dgm in landscapes]
 
         # Make sure we return one item.
@@ -196,6 +202,8 @@ class PersImage(TransformerMixin):
         """ Convert a diagram to a landscape
             (b,d) -> (b, d-b)
         """
+        if len(diagram)==0:
+            return []
         diagram[:, 1] -= diagram[:, 0]
 
         return diagram
