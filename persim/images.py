@@ -94,20 +94,30 @@ class PersImage(TransformerMixin):
         dgs = [np.copy(diagram) for diagram in diagrams]
         landscapes = [PersImage.to_landscape(dg) for dg in dgs]
 
-        if not self.specs:
+        """if not self.specs:
             self.specs = {
                 "maxBD": np.max([np.max(np.vstack((landscape, np.zeros((1, 2))))) 
                                  for landscape in landscapes] + [0]),
                 "minBD": np.min([np.min(np.vstack((landscape, np.zeros((1, 2))))) 
                                  for landscape in landscapes] + [0]),
-            }
+            }"""
         maxy=0.0
+        maxBD=0
+        minBD=0
         for landscape in landscapes:
             if landscape!=[]:
                 if np.max(landscape[:,1])>maxy:
                     maxy = np.max(landscape[:,1])
-                #maxy = np.max(maxy,np.max(landscape[:,1]))
-        #maxy = np.max( [np.max(landscape[:, 1]) for landscape in landscapes])
+                if np.max(landscape)>maxBD:
+                    maxBD = np.max(landscape)
+                if np.min(landscape)<minBD:
+                    minBD = np.min(landscape)
+        if not self.specs:
+            self.specs = {
+                "maxBD": maxBD,
+                "minBD": minBD
+            }
+
         imgs = [self._transform(dgm,maxy) for dgm in landscapes]
 
         # Make sure we return one item.
